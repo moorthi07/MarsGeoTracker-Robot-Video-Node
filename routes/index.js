@@ -125,22 +125,22 @@ router.get('/', function (req, res) {
   res.render('index', { title: 'Learning-Vonage-Node' });
 });
 
-router.get('/broadcast/:name/host', async function (req, res) {
+router.get('/api/broadcast/:name/host', async function (req, res) {
   const broadcastName = req.params.name + '-broadcast';
   await createSession(res, broadcastName, { initialLayoutClassList: ['full', 'focus'] }, 'moderator');
 });
 
-router.get('/broadcast/:name/viewer', async function (req, res) {
+router.get('/api/broadcast/:name/viewer', async function (req, res) {
   const broadcastName = req.params.name + '-broadcast';
   await createSession(res, broadcastName, { initialLayoutClassList: ['full', 'focus'] }, 'subscriber');
 });
 
-router.get('/broadcast/:name/guest', async function (req, res) {
+router.get('/api/broadcast/:name/guest', async function (req, res) {
   const broadcastName = req.params.name + '-broadcast';
   await createSession(res, broadcastName, { initialLayoutClassList: ['full', 'focus'] }, 'subscriber');
 });
 
-router.post('/broadcast/:room/start', async (req, res) => {
+router.post('/api/broadcast/:room/start', async (req, res) => {
   const { rtmp, lowLatency, fhd, dvr, sessionId, streamMode } = req.body;
   // Kill any existing broadcasts we have, to be safe
   vonage.video.searchBroadcasts({sessionId})
@@ -161,7 +161,7 @@ router.post('/broadcast/:room/start', async (req, res) => {
     })
 })
 
-router.post('/broadcast/:room/stop', async (req, res) => {
+router.post('/api/broadcast/:room/stop', async (req, res) => {
   const { sessionId } = req.body
   if (broadcastsToSessionIdDictionary[sessionId]) {
     vonage.video.stopBroadcast(broadcastsToSessionIdDictionary[sessionId].id)
@@ -176,7 +176,7 @@ router.post('/broadcast/:room/stop', async (req, res) => {
   }
 })
 
-router.post('/broadcast/:room/status', async (req, res) => {
+router.post('/api/broadcast/:room/status', async (req, res) => {
   const { sessionId } = req.body
   if (broadcastsToSessionIdDictionary[sessionId]) {
     vonage.video.getBroadcast(broadcastsToSessionIdDictionary[sessionId].id)
@@ -193,14 +193,14 @@ router.post('/broadcast/:room/status', async (req, res) => {
 /**
  * GET /session redirects to /room/session
  */
-router.get('/session', function (req, res) {
-  res.redirect('/room/session');
+router.get('/api/session', function (req, res) {
+  res.redirect('/api/room/session');
 });
 
 /**
  * GET /room/:name
  */
-router.get('/room/:name', async function (req, res) {
+router.get('/api/room/:name', async function (req, res) {
   const roomName = req.params.name;
   const e2ee = req.params.e2ee || false
   await createSession(res, roomName, { mediaMode:"routed", e2ee }, 'moderator');
@@ -209,7 +209,7 @@ router.get('/room/:name', async function (req, res) {
 /**
  * POST /archive/start
  */
-router.post('/archive/start', async function (req, res) {
+router.post('/api/archive/start', async function (req, res) {
   console.log('attempting to start archive');
   const json = req.body;
   const sessionId = json.sessionId;
@@ -236,7 +236,7 @@ router.post('/archive/start', async function (req, res) {
 /**
  * POST /archive/:archiveId/stop
  */
-router.post('/archive/:archiveId/stop', async function (req, res) {
+router.post('/api/archive/:archiveId/stop', async function (req, res) {
   const archiveId = req.params.archiveId;
   console.log('attempting to stop archive: ' + archiveId);
   try {
@@ -252,7 +252,7 @@ router.post('/archive/:archiveId/stop', async function (req, res) {
 /**
  * GET /archive/:archiveId/view
  */
-router.get('/archive/:archiveId/view', async function (req, res) {
+router.get('/api/archive/:archiveId/view', async function (req, res) {
   const archiveId = req.params.archiveId;
   console.log('attempting to view archive: ' + archiveId);
   try {
@@ -271,7 +271,7 @@ router.get('/archive/:archiveId/view', async function (req, res) {
 /**
  * GET /archive/:archiveId
  */
-router.get('/archive/:archiveId', async function (req, res) {
+router.get('/api/archive/:archiveId', async function (req, res) {
   const archiveId = req.params.archiveId;
   // fetch archive
   console.log('attempting to fetch archive: ' + archiveId);
@@ -289,7 +289,7 @@ router.get('/archive/:archiveId', async function (req, res) {
 /**
  * GET /archive
  */
-router.get('/archive', async function (req, res) {
+router.get('/api/archive', async function (req, res) {
   let filter = {};
   if (req.query.count) {
     filter.count = req.query.count;
@@ -313,7 +313,7 @@ router.get('/archive', async function (req, res) {
   }
 });
 
-router.get("/sip/:room", async function (req, res) {
+router.get("/api/sip/:room", async function (req, res) {
   const sessionId = findSessionIdForRoom(req.params.room);
   if (sessionId) {
     const conversation = findConversationFromSessionId(sessionId);
@@ -338,7 +338,7 @@ router.get("/sip/:room", async function (req, res) {
   }
 });
 
-router.post("/sip/:room/dial", async function (req, res) {
+router.post("/api/sip/:room/dial", async function (req, res) {
   const { msisdn } = req.body;
   const sessionId = findSessionIdForRoom(req.params.room);
   const conversation = findConversationFromSessionId(sessionId);
@@ -379,7 +379,7 @@ router.post("/sip/:room/dial", async function (req, res) {
     })
 });
 
-router.post("/sip/:room/hangup", async function (req, res) {
+router.post("/api/sip/:room/hangup", async function (req, res) {
   // Get the session ID
   // Look up the connection from calls ID
   const sessionId = findSessionIdForRoom(req.params.room)
@@ -391,7 +391,7 @@ router.post("/sip/:room/hangup", async function (req, res) {
     .catch(error => res.status(500).send(error));
 });
 
-router.get('/sip/vapi/answer', async function (req, res) {
+router.get('/api/sip/vapi/answer', async function (req, res) {
   const ncco = new NCCOBuilder();
   const conversation = findConversationFromSessionId(findSessionIdForRoom('session'));
 
@@ -413,7 +413,7 @@ router.get('/sip/vapi/answer', async function (req, res) {
 
 // This must be all because VAPI sometimes sends events as POST no matter what
 // your event URL config is set to. This is a known bug.
-router.all('/sip/vapi/events', async function (req, res) {
+router.all('/api/sip/vapi/events', async function (req, res) {
   if (req.query.status === "completed") {
     const conversation = findConversationFromSessionId(findSessionIdForRoom('session'));
     await vonage.video.disconnectClient(findSessionIdForRoom('session'), conversation.connectionId)
@@ -424,7 +424,7 @@ router.all('/sip/vapi/events', async function (req, res) {
   }
 })
 
-router.all('/admin/clear-conversations', async function (req, res) {
+router.all('/api/admin/clear-conversations', async function (req, res) {
   const token = tokenGenerate(appId, privateKey);
   await fetch('https://api.nexmo.com/v0.3/conversations', {
     method: 'GET',
@@ -457,7 +457,7 @@ router.all('/admin/clear-conversations', async function (req, res) {
 /**
  * POST /captions/start
  */
-router.post('/captions/start', async (req, res) => {
+router.post('/api/captions/start', async (req, res) => {
   const sessionId = req.body.sessionId;
   const captionsOptions = {
     languageCode: 'en-US',
@@ -476,7 +476,7 @@ router.post('/captions/start', async (req, res) => {
 /**
  * POST /captions/:captionsId/stop
  */
-router.post('/captions/:captionsId/stop', async (req, res) => {
+router.post('/api/captions/:captionsId/stop', async (req, res) => {
   const captionsId = req.params.captionsId;
   try {
     await vonage.video.disableCaptions(captionsId);
@@ -490,7 +490,7 @@ router.post('/captions/:captionsId/stop', async (req, res) => {
 /**
  * POST /audio-connector/connect
  */
-router.post('/audio-connector/connect', async (req, res) => {
+router.post('/api/audio-connector/connect', async (req, res) => {
   const { webSocketHost, sessionId } = req.body;
   try {
     const token = tokenGenerate(appId, privateKey);
@@ -522,7 +522,7 @@ router.post('/audio-connector/connect', async (req, res) => {
 /**
  * POST /audio-connector/disconnect
  */
-router.post('/audio-connector/disconnect', async (req, res) => {
+router.post('/api/audio-connector/disconnect', async (req, res) => {
   const { sessionId, connectionId } = req.body;
   try {
     await vonage.video.disconnectClient(sessionId, connectionId);
@@ -534,7 +534,11 @@ router.post('/audio-connector/disconnect', async (req, res) => {
   }
 });
 
-router.get('/_/health', async function (req, res) {
+router.get('/api/test', async function (req, res) {
+  res.status(200).json({ message: "Test endpoint is working!" });
+});
+
+router.get('/api/_/health', async function (req, res) {
   res.status(200).send({status: 'OK'});
 })
 
